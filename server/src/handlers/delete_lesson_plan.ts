@@ -1,16 +1,29 @@
+import { db } from '../db';
+import { lessonPlansTable } from '../db/schema';
+import { eq } from 'drizzle-orm';
 import { type GetLessonPlanInput } from '../schema';
 
-export async function deleteLessonPlan(input: GetLessonPlanInput): Promise<boolean> {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is deleting a lesson plan from the database.
-    
-    console.log('Deleting lesson plan with ID:', input.id);
-    
-    // Return false as placeholder (lesson plan not found or not deleted)
-    // Real implementation should:
-    // 1. Check if lesson plan exists in database
-    // 2. Delete the lesson plan if found
-    // 3. Return true if successfully deleted, false if not found
-    // 4. Handle any database errors appropriately
-    return Promise.resolve(false);
-}
+export const deleteLessonPlan = async (input: GetLessonPlanInput): Promise<boolean> => {
+  try {
+    // Check if lesson plan exists first
+    const existingPlan = await db.select()
+      .from(lessonPlansTable)
+      .where(eq(lessonPlansTable.id, input.id))
+      .execute();
+
+    if (existingPlan.length === 0) {
+      return false; // Lesson plan not found
+    }
+
+    // Delete the lesson plan
+    const result = await db.delete(lessonPlansTable)
+      .where(eq(lessonPlansTable.id, input.id))
+      .execute();
+
+    // Return true if deletion was successful
+    return (result.rowCount ?? 0) > 0;
+  } catch (error) {
+    console.error('Lesson plan deletion failed:', error);
+    throw error;
+  }
+};
